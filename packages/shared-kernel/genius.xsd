@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <xs:import namespace="http://www.w3.org/2001/XMLSchema-instance"/>
+    <xs:element name="genius">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="generators"/>
+            </xs:sequence>
+            <xs:attribute name="appPrefix" use="required" type="xs:string"/>
+            <xs:attribute name="appSrc" use="required" type="xs:anyURI" default="./src"/>
+            <xs:attribute name="testPrefix" use="required"/>
+            <xs:attribute name="testSrc" use="required" type="xs:anyURI" default="./tests"/>
+            <xs:attribute ref="xsi:noNamespaceSchemaLocation" use="required"/>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="generators" type="generatorsType"/>
+    <xs:complexType name="generatorsType">
+        <xs:sequence>
+            <xs:element name="directory" type="xs:anyURI" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>
