@@ -9,13 +9,12 @@ use Doctrine\ORM\QueryBuilder;
 
 trait QueryBuilderTrait
 {
-    private EntityManagerInterface $entityManager;
-
     abstract protected static function entityClass(): string;
+    abstract protected function getEntityManager(): EntityManagerInterface;
 
     private function createQueryBuilder(string $alias): QueryBuilder
     {
-        return $this->entityManager->createQueryBuilder()
+        return $this->getEntityManager()->createQueryBuilder()
             ->from(static::entityClass(), $alias)
             ->select(
                 $alias

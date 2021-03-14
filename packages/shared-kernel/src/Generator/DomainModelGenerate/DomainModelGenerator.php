@@ -39,13 +39,13 @@ class DomainModelGenerator
         $this->sourceGenerator->generate($this->commonDomainUuidClass($nameBuilder));
         $this->sourceGenerator->generate($this->commonDomainModelClass($nameBuilder));
         $this->sourceGenerator->generate($this->commonDomainModelConstructorParameterInterface($nameBuilder));
+        $this->sourceGenerator->generate($this->commonApplicationPersistencePersistenceInterface($nameBuilder));
+        $this->sourceGenerator->generate($this->commonApplicationPersistenceRepositoryInterface($nameBuilder));
         $this->sourceGenerator->generate($this->commonInfrastructureEntityClass($nameBuilder));
         $this->sourceGenerator->generate($this->commonInfrastructurePersistenceEntityMapperClass($nameBuilder));
         $this->sourceGenerator->generate($this->commonInfrastructurePersistenceEntityRepositoryClass($nameBuilder));
         $this->sourceGenerator->generate($this->commonInfrastructurePersistenceEntityPersistenceClass($nameBuilder));
         $this->sourceGenerator->generate($this->commonInfrastructurePersistenceEntityProxyClass($nameBuilder));
-        $this->sourceGenerator->generate($this->commonApplicationPersistencePersistenceInterface($nameBuilder));
-        $this->sourceGenerator->generate($this->commonApplicationPersistenceRepositoryInterface($nameBuilder));
     }
 
     private function commonDomainModelClass(DomainModelGeneratorNameBuilder $nameBuilder): PhpClass
@@ -83,8 +83,9 @@ class DomainModelGenerator
         return new Folder('Common');
     }
 
-    private function commonDomainModelConstructorParameterInterface(DomainModelGeneratorNameBuilder $nameBuilder
-    ): PhpClass {
+    private function commonDomainModelConstructorParameterInterface(
+        DomainModelGeneratorNameBuilder $nameBuilder
+    ): PhpInterface {
         return $this->commonDomainModelFolder($nameBuilder)->addPhpInterface(
             new PhpInterface((string)$nameBuilder->getModelConstructorParameterInterfaceName())
         );
@@ -92,11 +93,16 @@ class DomainModelGenerator
 
     private function commonInfrastructureEntityClass(DomainModelGeneratorNameBuilder $nameBuilder): PhpClass
     {
-        return $this->commonInfrastructure()->addFolder(new Folder('Entity'))->addPhpClass(
-            new PhpClass(
-                (string)$nameBuilder->getEntityName()
-            )
-        );
+        return $this->commonInfrastructure()
+            ->addFolder(
+                new Folder('Entity')
+            )->addPhpClass(
+                new PhpClass(
+                    (string)$nameBuilder->getEntityName()
+                )
+            )->implements(
+                $this->commonDomainModelConstructorParameterInterface($nameBuilder)
+            );
     }
 
     private function commonInfrastructure(): Folder
@@ -158,10 +164,25 @@ class DomainModelGenerator
         )->implements(
             $this->commonApplicationPersistenceRepositoryInterface($nameBuilder)
         )->addMethod(
-            // TODO add static visibility
-            new PhpMethod('entityClass', 'protected', PhpType::string())
+            new PhpMethod('entityClass', 'protected static', PhpType::string())
         )->addMethod(
             $this->repositoryGetByIdMethod($nameBuilder)
+        )->addMethod(
+            new PhpMethod(
+                '__construct',
+                params: [
+                    new PhpParameter(
+                        'entityManager',
+                        PhpType::object(PhpInterface::fromFQCN(EntityManagerInterface::class))
+                    ),
+                ]
+            )
+        )->addMethod(
+            new PhpMethod(
+                'getEntityManager',
+                'protected',
+                PhpType::object(PhpInterface::fromFQCN(EntityManagerInterface::class))
+            )
         );
     }
 
@@ -180,10 +201,12 @@ class DomainModelGenerator
         );
     }
 
-    private function commonApplicationPersistenceFolder(): Folder
+    private function commonApplicationPersistenceFolder(DomainModelGeneratorNameBuilder $nameBuilder): Folder
     {
         return $this->common()->addFolder(new Folder('Application'))->addFolder(
             new Folder('Persistence')
+        )->addFolder(
+            new Folder((string)$nameBuilder->getModelName())
         );
     }
 
