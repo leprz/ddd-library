@@ -194,7 +194,7 @@ class DomainModelGenerator
     private function commonApplicationPersistenceRepositoryInterface(
         DomainModelGeneratorNameBuilder $nameBuilder
     ): PhpInterface {
-        return $this->commonApplicationPersistenceFolder()->addPhpInterface(
+        return $this->commonApplicationPersistenceFolder($nameBuilder)->addPhpInterface(
             new PhpInterface((string)$nameBuilder->getRepositoryInterfaceName())
         )->addMethod(
             $this->repositoryGetByIdMethod($nameBuilder)
@@ -235,7 +235,7 @@ class DomainModelGenerator
 
     private function commonApplicationPersistencePersistenceInterface(DomainModelGeneratorNameBuilder $nameBuilder
     ): PhpInterface {
-        return $this->commonApplicationPersistenceFolder()->addPhpInterface(
+        return $this->commonApplicationPersistenceFolder($nameBuilder)->addPhpInterface(
             new PhpInterface((string)$nameBuilder->getPersistenceInterfaceName())
         )->addMethod(
             $this->flushMethod()
