@@ -36,6 +36,11 @@ class DomainModelGeneratorNameBuilder
         return $this->modelName->append('ConstructorParameterInterface');
     }
 
+    public function getModelConstructorParameterClassName(): PascalCaseName
+    {
+        return $this->modelName->append('ConstructorParameter');
+    }
+
     public function getEntityName(): PascalCaseName
     {
         return $this->modelName->append('Entity');

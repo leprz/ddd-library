@@ -22,6 +22,15 @@ class HexagonalStructureBuilder
         );
     }
 
+    public static function core(PascalCaseName $name): self
+    {
+        return new self(
+            (new Folder('Core'))->addFolder(
+                new Folder((string) $name)
+            )
+        );
+    }
+
     public static function common(): self
     {
         return new self(new Folder('Common'));

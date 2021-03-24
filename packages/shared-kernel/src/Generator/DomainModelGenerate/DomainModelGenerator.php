@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Library\SharedKernel\Generator\DomainModelGenerate;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Leprz\Boilerplate\PathNode\Folder;
 use Leprz\Boilerplate\PathNode\Php\PhpClass;
 use Leprz\Boilerplate\PathNode\Php\PhpInterface;
 use Leprz\Boilerplate\PathNode\Php\PhpMethod;
@@ -15,6 +14,7 @@ use Leprz\Boilerplate\PathNode\Php\PhpType;
 use Leprz\Genius\Common\Infrastructure\Generator\SourceGenerator;
 use Leprz\Genius\Common\Infrastructure\Generator\TestGenerator;
 use Library\Circulation\Common\Infrastructure\Persistence\EntityMapperTrait;
+use Library\SharedKernel\Generator\HexagonalBuilder\HexagonalStructureBuilder;
 use Library\SharedKernel\Infrastructure\Persistence\QueryBuilderTrait;
 
 /**
@@ -36,31 +36,37 @@ class DomainModelGenerator
      */
     public function generate(DomainModelGeneratorNameBuilder $nameBuilder): void
     {
-        $this->sourceGenerator->generate($this->commonDomainUuidClass($nameBuilder));
-        $this->sourceGenerator->generate($this->commonDomainModelClass($nameBuilder));
-        $this->sourceGenerator->generate($this->commonDomainModelConstructorParameterInterface($nameBuilder));
-        $this->sourceGenerator->generate($this->commonApplicationPersistencePersistenceInterface($nameBuilder));
-        $this->sourceGenerator->generate($this->commonApplicationPersistenceRepositoryInterface($nameBuilder));
-        $this->sourceGenerator->generate($this->commonInfrastructureEntityClass($nameBuilder));
-        $this->sourceGenerator->generate($this->commonInfrastructurePersistenceEntityMapperClass($nameBuilder));
-        $this->sourceGenerator->generate($this->commonInfrastructurePersistenceEntityRepositoryClass($nameBuilder));
-        $this->sourceGenerator->generate($this->commonInfrastructurePersistenceEntityPersistenceClass($nameBuilder));
-        $this->sourceGenerator->generate($this->commonInfrastructurePersistenceEntityProxyClass($nameBuilder));
+        $this->sourceGenerator->generate($this->domainModelUuidClass($nameBuilder));
+        $this->sourceGenerator->generate($this->domainModelClass($nameBuilder));
+        $this->sourceGenerator->generate($this->domainModelConstructorParameterInterface($nameBuilder));
+        $this->sourceGenerator->generate($this->domainModelConstructorParameterClass($nameBuilder));
+        $this->sourceGenerator->generate($this->applicationPersistencePersistenceInterface($nameBuilder));
+        $this->sourceGenerator->generate($this->applicationPersistenceRepositoryInterface($nameBuilder));
+        $this->sourceGenerator->generate($this->infrastructureEntityClass($nameBuilder));
+        $this->sourceGenerator->generate($this->infrastructurePersistenceEntityMapperClass($nameBuilder));
+        $this->sourceGenerator->generate($this->infrastructurePersistenceEntityRepositoryClass($nameBuilder));
+        $this->sourceGenerator->generate($this->infrastructurePersistenceEntityPersistenceClass($nameBuilder));
+        $this->sourceGenerator->generate($this->infrastructurePersistenceEntityProxyClass($nameBuilder));
     }
 
-    private function commonDomainModelClass(DomainModelGeneratorNameBuilder $nameBuilder): PhpClass
+    private function core(DomainModelGeneratorNameBuilder $nameBuilder): HexagonalStructureBuilder
     {
-        return $this->commonDomainModelFolder($nameBuilder)
-            ->addPhpClass(
-                new PhpClass((string)$nameBuilder->getModelName())
-            )->addMethod(
+        return HexagonalStructureBuilder::core($nameBuilder->getModelName());
+    }
+
+    private function domainModelClass(DomainModelGeneratorNameBuilder $nameBuilder): PhpClass
+    {
+        return $this->core($nameBuilder)->domain()->addPhpClass(
+            new PhpClass((string)$nameBuilder->getModelName())
+        )
+            ->addMethod(
                 new PhpMethod(
                     '__construct',
                     params: [
                         new PhpParameter(
                             'data',
                             PhpType::object(
-                                $this->commonDomainModelConstructorParameterInterface($nameBuilder)
+                                $this->domainModelConstructorParameterInterface($nameBuilder)
                             )
                         ),
                     ]
@@ -68,52 +74,38 @@ class DomainModelGenerator
             );
     }
 
-    private function commonDomainModelFolder(DomainModelGeneratorNameBuilder $nameBuilder): Folder
-    {
-        return $this->commonDomain()->addFolder(new Folder((string)$nameBuilder->getModelName()));
-    }
-
-    private function commonDomain(): Folder
-    {
-        return $this->common()->addFolder(new Folder('Domain'));
-    }
-
-    private function common(): Folder
-    {
-        return new Folder('Common');
-    }
-
-    private function commonDomainModelConstructorParameterInterface(
+    private function domainModelConstructorParameterInterface(
         DomainModelGeneratorNameBuilder $nameBuilder
     ): PhpInterface {
-        return $this->commonDomainModelFolder($nameBuilder)->addPhpInterface(
+        return $this->core($nameBuilder)->domain()->addPhpInterface(
             new PhpInterface((string)$nameBuilder->getModelConstructorParameterInterfaceName())
         );
     }
 
-    private function commonInfrastructureEntityClass(DomainModelGeneratorNameBuilder $nameBuilder): PhpClass
+    private function domainModelConstructorParameterClass(
+        DomainModelGeneratorNameBuilder $nameBuilder
+    ): PhpClass {
+        return $this->core($nameBuilder)->domain()->addPhpClass(
+            new PhpClass((string)$nameBuilder->getModelConstructorParameterClassName())
+        )->implements($this->domainModelConstructorParameterInterface($nameBuilder));
+    }
+
+    private function infrastructureEntityClass(DomainModelGeneratorNameBuilder $nameBuilder): PhpClass
     {
-        return $this->commonInfrastructure()
-            ->addFolder(
-                new Folder('Entity')
-            )->addPhpClass(
+        return $this->core($nameBuilder)->infrastructure()
+            ->addPhpClass(
                 new PhpClass(
                     (string)$nameBuilder->getEntityName()
                 )
             )->implements(
-                $this->commonDomainModelConstructorParameterInterface($nameBuilder)
+                $this->domainModelConstructorParameterInterface($nameBuilder)
             );
     }
 
-    private function commonInfrastructure(): Folder
-    {
-        return $this->common()->addFolder(new Folder('Infrastructure'));
-    }
-
-    private function commonInfrastructurePersistenceEntityMapperClass(
+    private function infrastructurePersistenceEntityMapperClass(
         DomainModelGeneratorNameBuilder $nameBuilder
     ): PhpClass {
-        return $this->commonInfrastructurePersistenceEntityFolder($nameBuilder)->addPhpClass(
+        return $this->core($nameBuilder)->infrastructure()->addPhpClass(
             new PhpClass((string)$nameBuilder->getEntityMapperClassName())
         )->useTraits(
             PhpTrait::fromFQCN(EntityMapperTrait::class)
@@ -130,39 +122,32 @@ class DomainModelGenerator
         )->addMethod(
             new PhpMethod(
                 'mapToExistingEntity',
-                returnType: PhpType::object($this->commonInfrastructureEntityClass($nameBuilder)),
+                returnType: PhpType::object($this->infrastructureEntityClass($nameBuilder)),
                 params: [
-                    new PhpParameter('entity', PhpType::object($this->commonInfrastructureEntityClass($nameBuilder))),
-                    new PhpParameter('model', PhpType::object($this->commonDomainModelClass($nameBuilder))),
+                    new PhpParameter('entity', PhpType::object($this->infrastructureEntityClass($nameBuilder))),
+                    new PhpParameter('model', PhpType::object($this->domainModelClass($nameBuilder))),
                 ]
             )
         )->addMethod(
             new PhpMethod(
                 'mapToNewEntity',
-                returnType: PhpType::object($this->commonInfrastructureEntityClass($nameBuilder)),
+                returnType: PhpType::object($this->infrastructureEntityClass($nameBuilder)),
                 params: [
-                    new PhpParameter('cart', PhpType::object($this->commonDomainModelClass($nameBuilder))),
+                    new PhpParameter('cart', PhpType::object($this->domainModelClass($nameBuilder))),
                 ]
             )
         );
     }
 
-    private function commonInfrastructurePersistenceEntityFolder(DomainModelGeneratorNameBuilder $nameBuilder): Folder
-    {
-        return $this->commonInfrastructure()->addFolder(new Folder('Persistence'))->addFolder(
-            new Folder((string)$nameBuilder->getModelName())
-        );
-    }
-
-    private function commonInfrastructurePersistenceEntityRepositoryClass(
+    private function infrastructurePersistenceEntityRepositoryClass(
         DomainModelGeneratorNameBuilder $nameBuilder
     ): PhpClass {
-        return $this->commonInfrastructurePersistenceEntityFolder($nameBuilder)->addPhpClass(
+        return $this->core($nameBuilder)->infrastructure()->addPhpClass(
             new PhpClass((string)$nameBuilder->getEntityRepositoryClassName())
         )->useTraits(
             PhpTrait::fromFQCN(QueryBuilderTrait::class)
         )->implements(
-            $this->commonApplicationPersistenceRepositoryInterface($nameBuilder)
+            $this->applicationPersistenceRepositoryInterface($nameBuilder)
         )->addMethod(
             new PhpMethod('entityClass', 'protected static', PhpType::string())
         )->addMethod(
@@ -188,25 +173,16 @@ class DomainModelGenerator
 
     private function repositoryGetByIdMethod(DomainModelGeneratorNameBuilder $nameBuilder): PhpMethod
     {
-        return new PhpMethod('getById', returnType: PhpType::object($this->commonDomainModelClass($nameBuilder)));
+        return new PhpMethod('getById', returnType: PhpType::object($this->domainModelClass($nameBuilder)));
     }
 
-    private function commonApplicationPersistenceRepositoryInterface(
+    private function applicationPersistenceRepositoryInterface(
         DomainModelGeneratorNameBuilder $nameBuilder
     ): PhpInterface {
-        return $this->commonApplicationPersistenceFolder($nameBuilder)->addPhpInterface(
+        return $this->core($nameBuilder)->application()->addPhpInterface(
             new PhpInterface((string)$nameBuilder->getRepositoryInterfaceName())
         )->addMethod(
             $this->repositoryGetByIdMethod($nameBuilder)
-        );
-    }
-
-    private function commonApplicationPersistenceFolder(DomainModelGeneratorNameBuilder $nameBuilder): Folder
-    {
-        return $this->common()->addFolder(new Folder('Application'))->addFolder(
-            new Folder('Persistence')
-        )->addFolder(
-            new Folder((string)$nameBuilder->getModelName())
         );
     }
 
@@ -219,7 +195,7 @@ class DomainModelGenerator
     {
         return new PhpMethod(
             'save', returnType: PhpType::void(), params: [
-                      new PhpParameter('model', PhpType::object($this->commonDomainModelClass($nameBuilder))),
+                      new PhpParameter('model', PhpType::object($this->domainModelClass($nameBuilder))),
                   ]
         );
     }
@@ -228,14 +204,14 @@ class DomainModelGenerator
     {
         return new PhpMethod(
             'add', returnType: PhpType::void(), params: [
-                     new PhpParameter('model', PhpType::object($this->commonDomainModelClass($nameBuilder))),
+                     new PhpParameter('model', PhpType::object($this->domainModelClass($nameBuilder))),
                  ]
         );
     }
 
-    private function commonApplicationPersistencePersistenceInterface(DomainModelGeneratorNameBuilder $nameBuilder
+    private function applicationPersistencePersistenceInterface(DomainModelGeneratorNameBuilder $nameBuilder
     ): PhpInterface {
-        return $this->commonApplicationPersistenceFolder($nameBuilder)->addPhpInterface(
+        return $this->core($nameBuilder)->application()->addPhpInterface(
             new PhpInterface((string)$nameBuilder->getPersistenceInterfaceName())
         )->addMethod(
             $this->flushMethod()
@@ -246,20 +222,20 @@ class DomainModelGenerator
         );
     }
 
-    private function commonDomainUuidClass(DomainModelGeneratorNameBuilder $nameBuilder): PhpClass
+    private function domainModelUuidClass(DomainModelGeneratorNameBuilder $nameBuilder): PhpClass
     {
-        return $this->commonDomainModelFolder($nameBuilder)->addPhpClass(
+        return $this->core($nameBuilder)->domain()->addPhpClass(
             new PhpClass((string)$nameBuilder->getModelIdName())
         );
     }
 
-    private function commonInfrastructurePersistenceEntityPersistenceClass(
+    private function infrastructurePersistenceEntityPersistenceClass(
         DomainModelGeneratorNameBuilder $nameBuilder
     ): PhpClass {
-        return $this->commonInfrastructurePersistenceEntityFolder($nameBuilder)->addPhpClass(
+        return $this->core($nameBuilder)->infrastructure()->addPhpClass(
             new PhpClass((string)$nameBuilder->getEntityPersistenceClassName())
         )->implements(
-            $this->commonApplicationPersistencePersistenceInterface($nameBuilder)
+            $this->applicationPersistencePersistenceInterface($nameBuilder)
         )->addMethod(
             $this->flushMethod()
         )->addMethod(
@@ -269,30 +245,30 @@ class DomainModelGenerator
         );
     }
 
-    private function commonInfrastructurePersistenceEntityProxyClass(DomainModelGeneratorNameBuilder $nameBuilder
+    private function infrastructurePersistenceEntityProxyClass(DomainModelGeneratorNameBuilder $nameBuilder
     ): PhpClass {
-        return $this->commonInfrastructurePersistenceEntityFolder($nameBuilder)->addPhpClass(
+        return $this->core($nameBuilder)->infrastructure()->addPhpClass(
             new PhpClass((string)$nameBuilder->getEntityProxyName())
         )->extends(
-            $this->commonDomainModelClass($nameBuilder)
+            $this->domainModelClass($nameBuilder)
         )->addMethod(
             new PhpMethod(
                 '__construct',
                 params: [
                     new PhpParameter(
                         'entity',
-                        PhpType::object($this->commonInfrastructureEntityClass($nameBuilder))
+                        PhpType::object($this->infrastructureEntityClass($nameBuilder))
                     ),
                 ]
             )
         )->addMethod(
             new PhpMethod(
                 'getEntity',
-                returnType: PhpType::object($this->commonInfrastructureEntityClass($nameBuilder)),
+                returnType: PhpType::object($this->infrastructureEntityClass($nameBuilder)),
                 params: [
                     new PhpParameter(
                         'mapper',
-                        PhpType::object($this->commonInfrastructurePersistenceEntityMapperClass($nameBuilder))
+                        PhpType::object($this->infrastructurePersistenceEntityMapperClass($nameBuilder))
                     ),
                 ]
             )
