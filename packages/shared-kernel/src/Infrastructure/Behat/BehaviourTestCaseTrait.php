@@ -13,6 +13,7 @@ use PHPUnit\Framework\MockObject\Rule\InvokedAtLeastCount as InvokedAtLeastCount
 use PHPUnit\Framework\MockObject\Rule\InvokedAtLeastOnce as InvokedAtLeastOnceMatcher;
 use PHPUnit\Framework\MockObject\Rule\InvokedAtMostCount as InvokedAtMostCountMatcher;
 use PHPUnit\Framework\MockObject\Rule\InvokedCount as InvokedCountMatcher;
+use PHPUnit\Framework\MockObject\Stub\ReturnCallback as ReturnCallbackStub;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 trait BehaviourTestCaseTrait
@@ -155,5 +156,10 @@ trait BehaviourTestCaseTrait
     public static function at(int $index): InvokedAtIndexMatcher
     {
         return new InvokedAtIndexMatcher($index);
+    }
+
+    public static function returnCallback($callback): ReturnCallbackStub
+    {
+        return new ReturnCallbackStub($callback);
     }
 }
