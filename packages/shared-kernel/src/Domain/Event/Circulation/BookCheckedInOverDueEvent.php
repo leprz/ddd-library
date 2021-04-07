@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Library\SharedKernel\Domain\Event\Circulation;
 
-class BookCheckedInOverDueEvent
+class BookCheckedInOverDueEvent implements DomainBroadcastEventInterface
 {
     public function __construct(
         private string $borrowerId,

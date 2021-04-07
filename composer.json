@@ -17,7 +17,7 @@
             "App\\Tests\\": [
                 "packages/circulation/tests/",
                 "packages/finances/tests/",
-                "packages/stocks/tests/"
+              "packages/stacks/tests/"
             ]
         }
     },
@@ -37,7 +37,7 @@
             "App\\": [
                 "packages/circulation/src/",
                 "packages/finances/src/",
-                "packages/stocks/src/"
+              "packages/stacks/src/"
             ]
         }
     },
