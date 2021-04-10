@@ -133,7 +133,7 @@ class DomainModelGenerator
                 'mapToNewEntity',
                 returnType: PhpType::object($this->infrastructureEntityClass($nameBuilder)),
                 params: [
-                    new PhpParameter('cart', PhpType::object($this->domainModelClass($nameBuilder))),
+                    new PhpParameter('model', PhpType::object($this->domainModelClass($nameBuilder))),
                 ]
             )
         );

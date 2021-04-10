@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Library\SharedKernel\Infrastructure\Behat;
 
-use Behat\Behat\Hook\Scope\BeforeScenarioScope;
+use Exception;
+use LogicException;
 use PHPUnit\Framework\MockObject\Generator;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Rule\AnyInvokedCount as AnyInvokedCountMatcher;
 use PHPUnit\Framework\MockObject\Rule\InvokedAtIndex as InvokedAtIndexMatcher;
 use PHPUnit\Framework\MockObject\Rule\InvokedAtLeastCount as InvokedAtLeastCountMatcher;
@@ -38,16 +38,20 @@ trait BehaviourTestCaseTrait
 
     /**
      * @template T
-     * @param class-string<T> $interface The interface to resolve
-     * @return T The resolved instance
+     * @psalm-param class-string<T> $interface The interface to resolve
+     * @psalm-return T The resolved instance
      */
     protected function resolve(string $interface): object
     {
-        if ($instance = self::$container->get($interface)) {
-            return $instance;
+        try {
+            if ($instance = self::$container->get($interface)) {
+                return $instance;
+            }
+        } catch (Exception $e) {
+            throw new LogicException($e->getMessage());
         }
 
-        throw new \LogicException(sprintf('Service [%s] does not exist.', $interface));
+        throw new LogicException(sprintf('Service [%s] does not exist.', $interface));
     }
 
     /**
