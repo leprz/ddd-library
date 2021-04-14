@@ -7,6 +7,7 @@ namespace Library\SharedKernel\Infrastructure\Behat;
 use Exception;
 use LogicException;
 use PHPUnit\Framework\MockObject\Generator;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Rule\AnyInvokedCount as AnyInvokedCountMatcher;
 use PHPUnit\Framework\MockObject\Rule\InvokedAtIndex as InvokedAtIndexMatcher;
 use PHPUnit\Framework\MockObject\Rule\InvokedAtLeastCount as InvokedAtLeastCountMatcher;
@@ -36,43 +37,44 @@ trait BehaviourTestCaseTrait
 
     abstract protected static function requirePhpUnit(): void;
 
-    /**
-     * @template T
-     * @psalm-param class-string<T> $interface The interface to resolve
-     * @psalm-return T The resolved instance
-     */
     protected function resolve(string $interface): object
     {
-        try {
-            if ($instance = self::$container->get($interface)) {
-                return $instance;
-            }
-        } catch (Exception $e) {
-            throw new LogicException($e->getMessage());
-        }
-
-        throw new LogicException(sprintf('Service [%s] does not exist.', $interface));
+        return $this->getFromContainer($interface);
     }
 
     /**
      * @template T
-     * @param string $interface The interface to resolve
-     * @return \PHPUnit\Framework\MockObject\MockObject|T The resolved instance
+     * @psalm-param class-string<T> $interface The interface to resolve
+     * @return T
      */
-    protected function bindMock(string $interface)
+    private function getFromContainer(string $interface): object
+    {
+        try {
+            return self::$container->get($interface);
+        } catch (Exception $e) {
+            throw new LogicException($e->getMessage());
+        }
+    }
+
+    protected function bindMock(string $interface): MockObject
     {
         $stub = $this->createMock($interface);
         $this->bindInstance($interface, $stub);
         return $stub;
     }
 
-    protected function createMock(string $class): object
+    /**
+     * @template T
+     * @param string $interface The interface to resolve
+     * @return T The resolved instance
+     */
+    protected function createMock(string $interface): MockObject
     {
         if (self::$mockGenerator === null) {
             self::$mockGenerator = new Generator();
         }
 
-        return self::$mockGenerator->getMock($class);
+        return self::$mockGenerator->getMock($interface);
     }
 
     /**
