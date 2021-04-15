@@ -46,7 +46,7 @@ trait ApiControllerTrait
      * @param \Symfony\Component\HttpFoundation\Request $request
      * @param object $contract
      */
-    protected function loadDataAndValidateRequestContract(Request $request, object &$contract): void
+    protected function loadDataAndValidateRequest(Request $request, object &$contract): void
     {
         $files = [];
         $contentTypeHeaderValue = $request->headers->get('Content-Type');
